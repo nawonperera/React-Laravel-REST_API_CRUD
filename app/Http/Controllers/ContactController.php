@@ -142,17 +142,78 @@ class ContactController extends Controller
     /**
      * Display the specified resource.
      */
+
+    // Laravel's route model binding automatically resolves the Contact model based on the ID in the URL.
+    // For example, if the URL is /contacts/123, Laravel will automatically fetch the Contact with ID 123 from the database and pass it to this method.
+    // This means you don't need to manually query the database for the contact; Laravel does it for you.
+    // The Contact $contact parameter is an instance of the Contact model that corresponds to the ID in the URL.
+
+    // public function show(Contact $contact) //Contact $contact is Laravel's route model binding
+
     public function show(string $id)
     {
-        //
+        // Find the contact by ID
+        $contact = Contact::find($id); // This retrieves the contact with the given ID from the database.
+        // If no contact is found, it returns null.
+        // If you want to automatically return a 404 Not Found response if the contact does not exist, you can use findOrFail() instead of find().
+
+        // findOrFail($id) will throw a ModelNotFoundException if no contact is found with the given ID.
+        // You can catch this exception globally or in your exception handler(App\Exceptions\Handler.php) to return a 404 Not Found response automatically.
+    
+
+        if(!$contact) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Contact not found'
+            ], 404); // Return a 404 Not Found response if the contact does not exist
+        }
+
+
+        // The $contact parameter is automatically resolved by Laravel's route model binding.
+        // It retrieves the contact with the given ID from the database.
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Contact retrieved successfully',
+            'data' => $contact // Return the contact data
+        ]);
     }
+    
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Contact $contact)
     {
-        //
+        $fields = $request->validate([
+            'first_name' => 'required|string', 
+            'last_name' => 'required|string',
+            'email' => 'required|email',
+            'phone_number' => 'nullable|string',
+            'address' => 'nullable|string',
+            'birth_date' => 'nullable|date',
+        ]);
+
+        if($fields['email'] !== $contact->email) // check if the email is being changed
+        {
+            $contactExists = Contact::where('email', $fields['email'])->first();
+            // If the email is being changed, check if a contact with the new email already exists
+            if($contactExists) {
+                return response()->json([
+                    'status' => 'error',
+                    'data' => null,
+                    'message' => 'Contact with this email already exists'
+                ], 400); // Return an error response if contact with the same email already exists
+            }
+        }
+
+        $contact->update($fields); // Update the contact with the validated fields
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Contact updated successfully',
+            'data' => $contact // Return the updated contact
+        ]);
+        // The $contact parameter is automatically resolved by Laravel's route model binding.
     }
 
     /**
