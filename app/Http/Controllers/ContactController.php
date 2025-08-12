@@ -143,13 +143,6 @@ class ContactController extends Controller
      * Display the specified resource.
      */
 
-    // Laravel's route model binding automatically resolves the Contact model based on the ID in the URL.
-    // For example, if the URL is /contacts/123, Laravel will automatically fetch the Contact with ID 123 from the database and pass it to this method.
-    // This means you don't need to manually query the database for the contact; Laravel does it for you.
-    // The Contact $contact parameter is an instance of the Contact model that corresponds to the ID in the URL.
-
-    // public function show(Contact $contact) //Contact $contact is Laravel's route model binding
-
     public function show(string $id)
     {
         // Find the contact by ID
@@ -182,7 +175,13 @@ class ContactController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Contact $contact)
+
+    // Laravel's route model binding automatically resolves the Contact model based on the ID in the URL.
+    // For example, if the URL is /contacts/123, Laravel will automatically fetch the Contact with ID 123 from the database and pass it to this method.
+    // This means you don't need to manually query the database for the contact; Laravel does it for you.
+    // The Contact $contact parameter is an instance of the Contact model that corresponds to the ID in the URL.
+
+    public function update(Request $request, Contact $contact) //Contact $contact is Laravel's route model binding
     {
         $fields = $request->validate([
             'first_name' => 'required|string', 
@@ -221,6 +220,21 @@ class ContactController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+
+        $contact = Contact::find($id); // Find the contact by ID
+
+        if(!$contact) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Contact not found'
+            ], 404); // Return a 404 Not Found response if the contact does not exist
+        }
+
+        $contact->delete(); // Delete the contact from the database
+
+        return response()->json([
+            'message' => 'Contact deleted successfully',
+        ], 200); // 204 status code means "No Content" (successful deletion with no content to return)
     }
+    
 }
